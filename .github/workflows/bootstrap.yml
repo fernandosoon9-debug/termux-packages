@@ -6,6 +6,11 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install SDK components
+        run: |
+          sdkmanager "platforms;android-33" "build-tools;30.0.3"
       - name: Build bootstrap
         run: ./scripts/run-docker.sh ./scripts/build-bootstraps.sh --architectures aarch64
       - uses: actions/upload-artifact@v4
