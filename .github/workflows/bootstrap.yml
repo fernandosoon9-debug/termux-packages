@@ -11,13 +11,23 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Install SDK components
+      - name: Install Android SDK inside Docker environment
         run: |
+          mkdir -p $HOME/lib/android-sdk-9123335/licenses
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $HOME/lib/android-sdk-9123335/licenses/android-sdk-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" >> $HOME/lib/android-sdk-9123335/licenses/android-sdk-license
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdtools.zip
+          unzip -q /tmp/cmdtools.zip -d /tmp/cmdtools
+          mkdir -p $HOME/lib/android-sdk-9123335/cmdline-tools/latest
+          mv /tmp/cmdtools/cmdline-tools/* $HOME/lib/android-sdk-9123335/cmdline-tools/latest/
+          export ANDROID_HOME=$HOME/lib/android-sdk-9123335
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+          yes | sdkmanager --licenses || true
           sdkmanager "platforms;android-33" "build-tools;30.0.3"
       - name: Build bootstrap
-        run: ./scripts/run-docker.sh ./scripts/build-bootstraps.sh --architectures aarch64
+        run: |
+          export ANDROID_HOME=$HOME/lib/android-sdk-9123335
+          ./scripts/run-docker.sh ./scripts/build-bootstraps.sh --architectures aarch64
       - uses: actions/upload-artifact@v4
         with:
           name: bootstrap-aarch64
