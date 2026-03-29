@@ -1,34 +1,29 @@
 name: Build Bootstrap
+
 on:
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-      - name: Install Android SDK inside Docker environment
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Free disk space
         run: |
-          mkdir -p $HOME/lib/android-sdk-9123335/licenses
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $HOME/lib/android-sdk-9123335/licenses/android-sdk-license
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" >> $HOME/lib/android-sdk-9123335/licenses/android-sdk-license
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdtools.zip
-          unzip -q /tmp/cmdtools.zip -d /tmp/cmdtools
-          mkdir -p $HOME/lib/android-sdk-9123335/cmdline-tools/latest
-          mv /tmp/cmdtools/cmdline-tools/* $HOME/lib/android-sdk-9123335/cmdline-tools/latest/
-          export ANDROID_HOME=$HOME/lib/android-sdk-9123335
-          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
-          yes | sdkmanager --licenses || true
-          sdkmanager "platforms;android-33" "build-tools;30.0.3"
-      - name: Build bootstrap
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo apt-get clean
+          df -h
+
+      - name: Build bootstrap via Docker
         run: |
-          export ANDROID_HOME=$HOME/lib/android-sdk-9123335
-          ./scripts/run-docker.sh ./scripts/build-bootstraps.sh --architectures aarch64
-      - uses: actions/upload-artifact@v4
+          ./scripts/run-docker.sh ./scripts/build-bootstraps.sh \
+            --architectures aarch64
+
+      - name: Upload bootstrap
+        uses: actions/upload-artifact@v4
         with:
           name: bootstrap-aarch64
           path: bootstrap-aarch64.zip
+          retention-days: 7
