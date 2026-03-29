@@ -14,12 +14,18 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
           sudo apt-get clean
-          df -h
 
-      - name: Build bootstrap via Docker
+      - name: Prepare Android SDK licenses for Docker
         run: |
-          ./scripts/run-docker.sh ./scripts/build-bootstraps.sh \
-            --architectures aarch64
+          mkdir -p $HOME/lib/android-sdk-9123335/licenses
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $HOME/lib/android-sdk-9123335/licenses/android-sdk-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" >> $HOME/lib/android-sdk-9123335/licenses/android-sdk-license
+          chmod -R 777 $HOME/lib/android-sdk-9123335
+
+      - name: Build bootstrap
+        run: |
+          export ANDROID_HOME=$HOME/lib/android-sdk-9123335
+          ./scripts/run-docker.sh ./scripts/build-bootstraps.sh --architectures aarch64
 
       - name: Upload bootstrap
         uses: actions/upload-artifact@v4
